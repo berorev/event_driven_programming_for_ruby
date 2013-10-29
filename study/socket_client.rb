@@ -3,7 +3,7 @@
 require 'socket'
 
 hostname = 'localhost'
-port = 2202
+port = 2222
 
 s = TCPSocket.open(hostname, port)
 
