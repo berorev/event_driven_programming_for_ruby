@@ -1,6 +1,6 @@
 class EventHandler
   def initialize
-    @events = Hash.new([])
+    @events = Hash.new { |h, k| h[k] = [] }
   end
   
   def on(event_key, &blk)

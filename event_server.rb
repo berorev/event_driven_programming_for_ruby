@@ -1,5 +1,5 @@
 require 'socket'
-require './event_message_handler.rb'
+require './event_handler.rb'
 
 class EventServer
   def initialize(host, port)
@@ -8,8 +8,8 @@ class EventServer
   end
   
   def start(&blk)
-    evt_msg_handler = EventMessageHandler.new
-    blk.call(evt_msg_handler)
+    evt_handler = EventHandler.new
+    blk.call(evt_handler)
     
     while true
       puts 'Select...'
@@ -19,18 +19,19 @@ class EventServer
       
       r.each do |stream|
         if stream == @server
-          puts 'Someone connected to server.'
           stream, sockaddr = @server.accept
           @streams << stream
+          
+          evt_handler.emit(:connect, stream)
         elsif stream.eof?
-          puts 'Client disconnected'
           @streams.delete(stream)
           stream.close
+          
+          evt_handler.emit(:close)
         else
-          puts 'Reading...'
           msg = stream.gets("\n")
           
-          evt_msg_handler.handle(msg)
+          evt_handler.emit(:msg, msg.strip)
         end
       end
       
@@ -39,7 +40,15 @@ class EventServer
 end
 
 EventServer.new('localhost', 2222).start do |h|
-  h.onmessage do |msg|
+  h.on(:connect) do
+    puts 'Someone connected to server.'
+  end
+  
+  h.on(:msg) do |msg|
     puts "Server received '#{msg}'"
+  end
+  
+  h.on(:close) do
+    puts 'Client disconnected'
   end
 end
